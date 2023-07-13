@@ -134,7 +134,7 @@ for year in range(2016,2022+1):
     # Add tracks to dictionary for debugging and inspection
     my_top_songs[year]['tracks'] = GetAllTracksInfo(my_top_songs[year]['id'],headers)
     df = pd.DataFrame(my_top_songs[year]['tracks'])
-    df.to_csv(f"MTS{str(year)}.csv")
+    df.to_csv(f"MTS{year}.csv")
 ```
 
 Below is the data analysis script.
@@ -154,7 +154,7 @@ import os
 
 directory = r'/directory/to/csv/files'
 os.chdir(directory)
-years = ['2016','2017','2018','2019','2020','2021','2022]
+years = ['2016','2017','2018','2019','2020','2021','2022']
 
 # Combine all years into one data frame
 dataframes = []
