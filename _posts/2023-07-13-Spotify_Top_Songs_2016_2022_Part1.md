@@ -1,12 +1,9 @@
 ---
 layout: post
-title: Analyzing My Spotify Top Songs 2016 - 2021 Part 1
+title: Analyzing My Spotify Top Songs 2016 - 2022 Part 1
 ---
 
-In this series of blog posts, I will discuss how my musical tastes have changed over the past six years using the data from my Spotify top songs playlists. In this first part, I will introduce the concept of Spotify's top songs feature and what my musical tastes were like before I started using Spotify. I will then briefly discuss the audio features associated with each song on Spotify. Then I will present the Python code I wrote to download my Top Songs playlists from 2016 - 2021, as well as the code used to organize and visualize the data. Finally, I will discuss how the acousticness of my top songs has changed over the years.
-
-## Introduction
-One of the things I love about Spotify is their summary playlists of the top 100 songs you listened to during the past year. These playlists are called "Your Top Songs (year)" and are usually created in early December of that year. I've been a Spotify premium subscriber since May/June 2014, but I don't have a record of my top songs from 2014 or 2015. However, I do have a record of my top songs from 2016 to 2021.
+In this series of blog posts, I will discuss how my musical tastes have changed over the past six years using the data from my Spotify top songs playlists. One of the things I love about Spotify is their summary playlists of the top 100 songs you listened to during the past year. These playlists are called "Your Top Songs (year)" and are usually created in early December of that year. I've been a Spotify premium subscriber since May/June 2014, but I don't have a record of my top songs from 2014 or 2015. However, I do have a record of my top songs from 2016 to 2022.
 
 ### My Musical Tastes Prior to Spotify
 
@@ -45,16 +42,15 @@ while tracks with low valence sound more negative (e.g. sad, depressed, angry)."
 
 
 ## Python Code
-Using the power of Python and the [Spotify API](https://developer.spotify.com/documentation/web-api/), I downloaded my top songs from 2016 to 2021 along with their audio features as CSV files. Once I had my top songs playlists downloaded with the associated audio features, I collected them together using pandas and then used Seaborn to generate box-and-whisker plots of each year's data side-by-side.
+Using the power of Python and the [Spotify API](https://developer.spotify.com/documentation/web-api/), I downloaded my top songs from 2016 to 2022 along with their audio features as CSV files. Once I had my top songs playlists downloaded with the associated audio features, I collected them together using pandas and then used Seaborn to generate box-and-whisker plots of each year's data side-by-side.
 
 Below is the data extraction script. I used the requests library to interface with the API and the pandas library to convert the list of dicts to a CSV file.
 ```python
 # -*- coding: utf-8 -*-
 """
-@author: wapisani
+@author: Will Pisani, PhD
 
-This script will download my top songs from 2016 to 2021 and save them to 
-CSV files.
+This script will download my top songs from 2016 to 2022 and save them to CSV files.
 """
 
 import requests, os
@@ -101,46 +97,44 @@ def GetAllTracksInfo(playlist_id,authorization_header):
     
     return tracks
 
-# Use this URL to get an access token: https://developer.spotify.com/console/get-recommendations/
-# Scroll to the bottom and click "Get Token" then select "playlist-modify-private" as the scope
-access_token = ''
+auth_url = 'https://accounts.spotify.com/api/token'
+
+CLIENT_ID = 'your_client_id'
+CLIENT_SECRET = 'your_client_secret'
+
+data = {
+    'grant_type': 'client_credentials',
+    'client_id': CLIENT_ID,
+    'client_secret': CLIENT_SECRET,
+}
+
+auth_response = requests.post(auth_url, data=data)
+
+access_token = auth_response.json().get('access_token')
 
 headers = {
-    'Authorization': 'Bearer {token}'.format(token=access_token)
+    'Authorization': f'Bearer {access_token}'
 }
 
 # base URL of all Spotify API endpoints
 BASE_URL = 'https://api.spotify.com/v1/'
 
 # My Top Songs = MTS
-MTS2016_ID = '2016_playlist_id'
-MTS2017_ID = '2017_playlist_id'
-MTS2018_ID = '2018_playlist_id'
-MTS2019_ID = '2019_playlist_id'
-MTS2020_ID = '2020_playlist_id'
-MTS2021_ID = '2021_playlist_id'
+my_top_songs = {2016 : {'id' : '2016_id'},
+                2017 : {'id' : '2017_id'},
+                2018 : {'id' : '2018_id'},
+                2019 : {'id' : '2019_id'},
+                2020 : {'id' : '2020_id'},
+                2021 : {'id' : '2021_id'},
+                2022 : {'id' : '2022_id'}}
 
-MTS2016_tracks = GetAllTracksInfo(MTS2016_ID, headers)
-MTS2017_tracks = GetAllTracksInfo(MTS2017_ID, headers)
-MTS2018_tracks = GetAllTracksInfo(MTS2018_ID, headers)
-MTS2019_tracks = GetAllTracksInfo(MTS2019_ID, headers)
-MTS2020_tracks = GetAllTracksInfo(MTS2020_ID, headers)
-MTS2021_tracks = GetAllTracksInfo(MTS2021_ID, headers)
+os.chdir(r'/directory/to/save/playlist/csvs/to')
 
-os.chdir(r'F:\Documents\Programming\Python\python-projects\Spotify')
-
-df2016 = pd.DataFrame(MTS2016_tracks)
-df2016.to_csv('MTS2016.csv')
-df2017 = pd.DataFrame(MTS2017_tracks)
-df2017.to_csv('MTS2017.csv')
-df2018 = pd.DataFrame(MTS2018_tracks)
-df2018.to_csv('MTS2018.csv')
-df2019 = pd.DataFrame(MTS2019_tracks)
-df2019.to_csv('MTS2019.csv')
-df2020 = pd.DataFrame(MTS2020_tracks)
-df2020.to_csv('MTS2020.csv')
-df2021 = pd.DataFrame(MTS2021_tracks)
-df2021.to_csv('MTS2021.csv')
+for year in range(2016,2022+1):
+    # Add tracks to dictionary for debugging and inspection
+    my_top_songs[year]['tracks'] = GetAllTracksInfo(my_top_songs[year]['id'],headers)
+    df = pd.DataFrame(my_top_songs[year]['tracks'])
+    df.to_csv(f"MTS{str(year)}.csv")
 ```
 
 Below is the data analysis script.
@@ -158,9 +152,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-directory = r'F:\Documents\Programming\Python\python-projects\Spotify'
+directory = r'/directory/to/csv/files'
 os.chdir(directory)
-years = ['2016','2017','2018','2019','2020','2021']
+years = ['2016','2017','2018','2019','2020','2021','2022]
 
 # Combine all years into one data frame
 dataframes = []
@@ -183,7 +177,7 @@ features = ['acousticness','danceability','duration_min','energy','instrumentaln
 # Spotify's official docs on the audio features
 # https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features
 
-os.chdir(r'F:\Documents\Programming\Python\python-projects\Spotify\My_Top_Songs_Plots')
+os.chdir(r'/directory/where/you/want/to/save/the/plots/to')
 for feature in features:
     fig, ax = plt.subplots()
     ax = sns.boxplot(x="Year",y=feature,data=df)
@@ -198,13 +192,13 @@ Now let's talk about the first audio feature - acousticness!
 <figure>
    <img
    src="../images/Spotify/My_Top_Songs_Box_Plot_acousticness.png"
-   alt="My Top Songs 2016-2021 Acousticness">
+   alt="My Top Songs 2016-2022 Acousticness">
    <figcaption>Figure 1. Acousticness of Will Pisani's top songs as a function of time. The confidence that a song is acoustic increases as the value increases.</figcaption>
 </figure>
  As you can see, the acousticness of my top songs has steadily decreased over the years with a large decrease in Q3 from 2019 to 2020. It's clear I listened to significantly more music with electronic elements than orchestral elements. The more I listened to music on Spotify and discovered more music, the less I listened to orchestral/acoustic music.
  <br /><br />
  
- In all years but 2020, my top songs spanned the entire acousticness range. In 2020, the maximum acousticness value was 0.841 while the other years were greater than 0.97. Most songs had an acousticness value less than 0.2. So what happened with 2020? Well, the COVID-19 pandemic happened. 2020 was a dark time for me and I started listening to a lot more pop, rock, pop-rock, and pop-punk (enough that I made a pop-rock/pop-punk playlist in Sept 2020). Acoustically, 2021 was a continuation of the downward trend, but there were 16 songs that could be considered outliers. These songs actually spanned several different genres from video game music (a "City of Tears" cover from the video game "Hollow Knight") to pop (Taylor Swifts's "Cornelia Street") to pop-punk (Halflives' "Fugitive (Reimagined)"). It will be interesting to see if 2022 has a similar range as 2021 and 2020 or if it will be larger. I will try to remember to update this post with the acousticness values from 2022.
+ My top songs spanned nearly the entire acousticness range from 2016 to 2019, but the range decreased significantly from 2020 onwards. There are four outliers in 2021 that are close to 1.0 acousticness, but most songs are nowhere near 1.0. So what happened with 2020? Well, the COVID-19 pandemic happened. 2020 was a dark time for me and I started listening to a lot more pop, rock, pop-rock, and pop-punk (enough that I made a pop-rock/pop-punk playlist in Sept 2020). Acoustically, 2021 and 2022 were a continuation of the downward trend, with 2022 exhibiting a significant decrease relative to 2021. I've really leaned into the pop, pop-rock, and country-pop over the last three years. I listen to more pop now than video game music (Golly, I don't think Will from 2014 would have ever thought that was possible!).
 
 ## Conclusion
-In this post I introduced the concept of Spotify Top Songs and the audio features associated with each track on Spotify. I presented the Python code I wrote to download and organize my top songs and their audio features, and the Python code I wrote to make box-and-whisker plots. I discussed the acousticness of my top songs from 2016 to 2021 and how it has changed. In the next post, I will discuss danceability, duration, and energy of my top songs 2016 - 2021.
+I hope you enjoyed this post and found the Python code to be helpful. Stay tuned for the next part in the series!
